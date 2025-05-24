@@ -74,13 +74,16 @@ async def connect(interaction: discord.Interaction):
     print(f"準備連接到語音頻道：{channel.name}")
     print(f"目前 voice_client 狀態：{storage.voice_manager.get_voice_client()}")
 
+    # 先回應互動，避免超時
+    await interaction.response.send_message("正在嘗試連接...", ephemeral=True)
+
     # 加入語音頻道
     try:
         # 檢查是否已經連接到目標頻道
         current_client = storage.voice_manager.get_voice_client()
         if current_client and current_client.channel.id == channel.id:
             print(f"已經連接到目標頻道：{channel.name}")
-            await interaction.response.send_message(f"✅ 已在語音頻道：{channel.name}", ephemeral=True)
+            await interaction.followup.send(f"✅ 已在語音頻道：{channel.name}", ephemeral=True)
             return
 
         # 如果機器人已經在某個語音頻道中，先斷開連接
@@ -104,7 +107,7 @@ async def connect(interaction: discord.Interaction):
             # 驗證連接狀態
             if storage.voice_manager.is_connected():
                 print(f"✅ 成功連接到語音頻道：{channel.name}")
-                await interaction.response.send_message(f"✅ 已加入語音頻道：{channel.name}", ephemeral=True)
+                await interaction.followup.send(f"✅ 已加入語音頻道：{channel.name}", ephemeral=True)
             else:
                 raise Exception("連接狀態驗證失敗")
                 
@@ -118,11 +121,11 @@ async def connect(interaction: discord.Interaction):
                 new_client = await channel.connect(timeout=60, reconnect=True)
                 storage.voice_manager.voice_client = new_client
                 print(f"✅ 重試成功")
-                await interaction.response.send_message(f"✅ 已加入語音頻道：{channel.name}", ephemeral=True)
+                await interaction.followup.send(f"✅ 已加入語音頻道：{channel.name}", ephemeral=True)
             except Exception as retry_error:
                 print(f"❌ 重試也失敗了：{str(retry_error)}")
                 storage.voice_manager.voice_client = None
-                await interaction.response.send_message(f"❌ 連接失敗：{str(e)}", ephemeral=True)
+                await interaction.followup.send(f"❌ 連接失敗：{str(e)}", ephemeral=True)
             
     except Exception as e:
         print(f"❌ 連接錯誤：{str(e)}")
@@ -130,7 +133,7 @@ async def connect(interaction: discord.Interaction):
         import traceback
         print(f"詳細錯誤信息：{traceback.format_exc()}")
         storage.voice_manager.voice_client = None
-        await interaction.response.send_message(f"❌ 加入失敗：{str(e)}", ephemeral=True)
+        await interaction.followup.send(f"❌ 加入失敗：{str(e)}", ephemeral=True)
 
 
 @bot.tree.command(name="disconnect", description="讓機器人離開語音頻道", guild=GUILD_ID)
